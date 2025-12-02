@@ -2,11 +2,11 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
-namespace StockTok;
+namespace ApiGateway;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
 
@@ -24,22 +24,20 @@ public class Program
         var services = builder.Services;
         var configuration = builder.Configuration;
 
-        // Add controllers
-        services.AddControllers();
+        // [TODO] Use Ocelot or YARP, and add the necessary configurations here.
 
-        var domain = $"https://{configuration["Auth0:Domain"]}/";
-        var audience = configuration["Auth0:Audience"];
+        // --- FIX: Add Authorization Services ---
+        services.AddAuthorization();
+        // ---------------------------------------
 
-        // Configure JWT Bearer authentication
         services
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
-                options.Authority = domain;
-                options.Audience = audience;
+                options.Authority = configuration["Auth0:Authority"];
+                options.Audience = configuration["Auth0:Audience"];
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    // ValidAudiences = [audience],
                     NameClaimType = ClaimTypes.NameIdentifier
                 };
             });
@@ -52,11 +50,15 @@ public class Program
 
         }
 
-        // app.UseHttpsRedirection(); // TODO: IMPORTANT: Uncomment when in production
+        // app.UseHttpsRedirection();
 
+        // The order of these is critical
         app.UseAuthentication();
         app.UseAuthorization();
 
-        app.MapControllers();
+        // Note: MapControllers might throw an error if you don't have controllers added 
+        // via services.AddControllers(). If this is just a Gateway, you might replace 
+        // this with YARP endpoints later.
+        // app.MapControllers(); 
     }
 }
