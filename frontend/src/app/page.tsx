@@ -1,38 +1,35 @@
-import { auth0 } from "@/src/lib/auth0";
-import DummyApiTester from "../components/DummyApiTester";
 
+import { Navbar, Footer } from "@/components/layout"
+import { HeroSection, CommunitySection, WatchlistSection, FeaturesSection } from "@/components/home"
+import { ChartPreview, MarketOverview } from "@/components/market"
+import { LoadingScreen } from "@/components/shared"
+import { auth0 } from "@/lib/auth0"
 
-export default async function HomePage() {
-  // 1. Fetch the user session securely on the server.
-  const session = await auth0.getSession();
+export default async function Home() {
+  // Fetch session server-side
+  const session = await auth0.getSession()
+  
+  // Extract safe user info to pass to client components
+  const user = session?.user ? {
+    name: session.user.name,
+    email: session.user.email,
+    picture: session.user.picture,
+    nickname: session.user.nickname,
+  } : null
 
-  // 2. If no session, render the public-facing login state.
-  if (!session) {
-    return (
-      <main>
-        <h2>Please log in to continue.</h2>
-        <a href="/auth/login">
-          <button>Log in</button>
-        </a>
-      </main>
-    );
-  }
-
-  // 3. If a session exists, render the authenticated state.
   return (
-    <main>
-      <h1>Welcome, {session.user.name}!</h1>
-      <img src={session.user.picture} alt={`Profile of ${session.user.name}`} />
-      <h1>Your email: {session.user.email}</h1>
-      <p>
-        <a href="/auth/logout">
-          <button>Log out</button>
-        </a>
-      </p>
-
-      <hr style={{ margin: "2rem 0" }} />
-
-      <DummyApiTester />
-    </main>
-  );
+    <>
+      <LoadingScreen />
+      <Navbar user={user} />
+      <main>
+        <HeroSection isLoggedIn={!!user} />
+        <MarketOverview />
+        <ChartPreview />
+        <CommunitySection />
+        <WatchlistSection />
+        <FeaturesSection />
+      </main>
+      <Footer />
+    </>
+  )
 }
